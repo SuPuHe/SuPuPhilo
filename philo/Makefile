@@ -6,7 +6,7 @@
 #    By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/06/16 09:55:52 by omizin            #+#    #+#              #
-#    Updated: 2025/06/16 09:59:57 by omizin           ###   ########.fr        #
+#    Updated: 2025/06/17 14:41:03 by omizin           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,7 @@ INCS_DIR = includes
 
 INCLUDE = -I$(INCS_DIR) -I$(SUPULIB_DIR)/libft/includes -I$(SUPULIB_DIR)/ft_printf/includes -I$(SUPULIB_DIR)/get_next_line/includes
 CC = cc
-CFLAGS = -Wall -Wextra -Werror $(INCLUDE)
+CFLAGS = -Wall -Wextra -Werror -pthread $(INCLUDE)
 
 RM = rm -rf
 
