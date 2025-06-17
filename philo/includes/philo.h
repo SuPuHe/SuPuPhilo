@@ -31,4 +31,14 @@ typedef struct s_input
 	int	meal_num;
 }	t_input;
 
+typedef struct s_philo
+{
+	int				id;
+	int				meals_eaten;
+	long			last_meal_time;
+	t_input			*input;
+	pthread_mutex_t	*forks;
+	pthread_mutex_t	*print_mutex;
+}	t_philo;
+
 #endif

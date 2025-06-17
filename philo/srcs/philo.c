@@ -1,5 +1,13 @@
 #include "philo.h"
 
+long	get_time(void)
+{
+	struct timeval	tv;
+
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
 long	ft_long_atoi(const char *string)
 {
 	int		i;
@@ -77,6 +85,65 @@ int	get_input(int argc, char **argv, t_input *input)
 	return (1);
 }
 
+pthread_mutex_t	*init_forks(int n)
+{
+	pthread_mutex_t	*forks;
+	int				i;
+
+	forks = malloc(sizeof(pthread_mutex_t) * n);
+	if (!forks)
+		return (NULL);
+	i = 0;
+	while (i < n)
+	{
+		pthread_mutex_init(&forks[i], NULL);
+		i++;
+	}
+	return (forks);
+}
+
+void	*philo_loop(void *arg)
+{
+	t_philo	*philo = (t_philo *)arg;
+
+	while (1)
+	{
+		pthread_mutex_lock(philo->print_mutex);
+		printf("time: %ld, id: %d is sleeping\n", get_time(), philo->id);
+		pthread_mutex_unlock(philo->print_mutex);
+		usleep(philo->input->sleep_time * 1000);
+	}
+	return (NULL);
+}
+
+int	init_philos(t_input *input)
+{
+	pthread_t		*threads = malloc(sizeof(pthread_t) * input->philo_num);
+	t_philo			*philos = malloc(sizeof(t_philo) * input->philo_num);
+	pthread_mutex_t	*forks = init_forks(input->philo_num);
+	pthread_mutex_t	*print_mutex = malloc(sizeof(pthread_mutex_t));
+	int				i;
+
+	if (!threads || !philos || !forks || !print_mutex)
+		return (0);
+	pthread_mutex_init(print_mutex, NULL);
+	i = 0;
+	while (i < input->philo_num)
+	{
+		philos[i].id = i + 1;
+		philos[i].meals_eaten = 0;
+		philos[i].input = input;
+		philos[i].forks = forks;
+		philos[i].print_mutex = print_mutex;
+		pthread_create(&threads[i], NULL, philo_loop, &philos[i]);
+		i++;
+	}
+	i = 0;
+	while (i < input->philo_num)
+		pthread_join(threads[i++], NULL);
+	return (1);
+}
+
 int	main(int argc, char **argv)
 {
 	t_input	input;
@@ -84,6 +151,7 @@ int	main(int argc, char **argv)
 	if (!get_input(argc, argv, &input))
 		return (1);
 	printf("PHILO START\n");
-	printf("%d\n%d\n%d\n%d\n", input.philo_num, input.eat_time, input.sleep_time, input.meal_num);
+	if (!init_philos(&input))
+		return (1);
 	return (0);
 }
