@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/06/18 11:26:00 by omizin            #+#    #+#             */
+/*   Updated: 2025/06/18 11:26:00 by omizin           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
 long	get_time(void)
@@ -6,6 +18,11 @@ long	get_time(void)
 
 	gettimeofday(&tv, NULL);
 	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+long	get_current_ms(t_input *input)
+{
+	return (get_time() - input->start_time);
 }
 
 long	ft_long_atoi(const char *string)
@@ -47,23 +64,21 @@ int	ft_num_check(char *s)
 		return (0);
 }
 
-void	set_input_info(t_input *input, int argc, int var[argc - 1])
+void	set_input_info(t_input *input, int argc, char **argv)
 {
-	input->philo_num = var[0];
-	input->fork_num = var[0];
-	input->die_time = var[1];
-	input->eat_time = var[2];
-	input->sleep_time = var[3];
+	input->philo_num = ft_long_atoi(argv[1]);
+	input->fork_num = ft_long_atoi(argv[1]);
+	input->die_time = ft_long_atoi(argv[2]);
+	input->eat_time = ft_long_atoi(argv[3]);
+	input->sleep_time = ft_long_atoi(argv[4]);
+	input->start_time = get_time();
 	if (argc == 6)
-		input->meal_num = var[4];
+		input->meal_num = ft_long_atoi(argv[5]);
 }
 
 int	get_input(int argc, char **argv, t_input *input)
 {
 	int		i;
-	long	num;
-	int		j;
-	int		var[argc - 1];
 
 	if (argc != 5 && argc != 6)
 	{
@@ -71,17 +86,13 @@ int	get_input(int argc, char **argv, t_input *input)
 		return (0);
 	}
 	i = 1;
-	j = 0;
 	while (i < argc)
 	{
 		if (ft_num_check(argv[i]) == 0)
 			return (printf("Error input\n"), 1);
-		num = ft_long_atoi(argv[i]);
-		var[j] = num;
-		j++;
 		i++;
 	}
-	set_input_info(input, argc, var);
+	set_input_info(input, argc, argv);
 	return (1);
 }
 
@@ -104,26 +115,43 @@ pthread_mutex_t	*init_forks(int n)
 
 void	*philo_loop(void *arg)
 {
-	t_philo	*philo = (t_philo *)arg;
+	t_philo	*philo;
 
-	while (1)
+	philo = (t_philo *)arg;
+	// while (1)
+	while (philo->last_meal_time = get_current_ms(philo->input) <= philo->input->die_time)
 	{
 		pthread_mutex_lock(philo->print_mutex);
-		printf("time: %ld, id: %d is sleeping\n", get_time(), philo->id);
+		printf("time: %ld, id: %d is thinking\n", get_current_ms(philo->input), philo->id);
+		pthread_mutex_unlock(philo->print_mutex);
+		pthread_mutex_lock(philo->print_mutex);
+		printf("time: %ld, id: %d is sleeping\n", get_current_ms(philo->input), philo->id);
 		pthread_mutex_unlock(philo->print_mutex);
 		usleep(philo->input->sleep_time * 1000);
+		pthread_mutex_lock(philo->print_mutex);
+		printf("time: %ld, id: %d is eating\n", get_current_ms(philo->input), philo->id);
+		pthread_mutex_unlock(philo->print_mutex);
+		usleep(philo->input->eat_time * 1000);
+		//philo->last_meal_time = 0;
 	}
+	pthread_mutex_lock(philo->print_mutex);
+	printf("time: %ld, id: %d is die\n", get_current_ms(philo->input), philo->id);
+	pthread_mutex_unlock(philo->print_mutex);
 	return (NULL);
 }
 
 int	init_philos(t_input *input)
 {
-	pthread_t		*threads = malloc(sizeof(pthread_t) * input->philo_num);
-	t_philo			*philos = malloc(sizeof(t_philo) * input->philo_num);
-	pthread_mutex_t	*forks = init_forks(input->philo_num);
-	pthread_mutex_t	*print_mutex = malloc(sizeof(pthread_mutex_t));
+	pthread_t		*threads;
+	t_philo			*philos;
+	pthread_mutex_t	*forks;
+	pthread_mutex_t	*print_mutex;
 	int				i;
 
+	threads = malloc(sizeof(pthread_t) * input->philo_num);
+	philos = malloc(sizeof(t_philo) * input->philo_num);
+	forks = init_forks(input->philo_num);
+	print_mutex = malloc(sizeof(pthread_mutex_t));
 	if (!threads || !philos || !forks || !print_mutex)
 		return (0);
 	pthread_mutex_init(print_mutex, NULL);

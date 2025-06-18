@@ -23,12 +23,13 @@
 
 typedef struct s_input
 {
-	int	philo_num;
-	int	fork_num;
-	int	die_time;
-	int	eat_time;
-	int	sleep_time;
-	int	meal_num;
+	int		philo_num;
+	int		fork_num;
+	int		die_time;
+	int		eat_time;
+	int		sleep_time;
+	int		meal_num;
+	long	start_time;
 }	t_input;
 
 typedef struct s_philo
