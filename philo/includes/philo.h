@@ -42,4 +42,11 @@ typedef struct s_philo
 	pthread_mutex_t	*print_mutex;
 }	t_philo;
 
+typedef struct s_monitor
+{
+	t_philo			*philos;
+	t_input			*input;
+	pthread_mutex_t	*print_mutex;
+}	t_monitoring;
+
 #endif
