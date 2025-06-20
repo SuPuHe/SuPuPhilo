@@ -12,6 +12,8 @@
 
 #include "philo.h"
 
+#define CHECK_DELAY 2
+
 long	get_time(void)
 {
 	struct timeval	tv;
@@ -74,6 +76,8 @@ void	set_input_info(t_input *input, int argc, char **argv)
 	input->start_time = get_time();
 	if (argc == 6)
 		input->meal_num = ft_long_atoi(argv[5]);
+	else
+		input->meal_num = -1;
 }
 
 int	get_input(int argc, char **argv, t_input *input)
@@ -119,24 +123,51 @@ void	smart_sleep(long ms)
 
 	start = get_time();
 	while (get_time() - start < ms)
-		usleep(100);
+		usleep(10);
 }
 
 void	*philo_loop(void *arg)
 {
-	t_philo	*philo = (t_philo *)arg;
+	t_philo	*philo;
+	int		left;
+	int		right;
 
+	philo = (t_philo *)arg;
+	left = philo->id - 1;
+	right = (philo->id) % philo->input->philo_num;
 	while (1)
 	{
 		pthread_mutex_lock(philo->print_mutex);
 		printf("time: %ld, id: %d is thinking\n", get_current_ms(philo->input), philo->id);
 		pthread_mutex_unlock(philo->print_mutex);
 
+		if (philo->id % 2 == 0)
+		{
+			pthread_mutex_lock(&philo->forks[right]);
+			pthread_mutex_lock(&philo->forks[left]);
+		}
+		else
+		{
+			pthread_mutex_lock(&philo->forks[left]);
+			pthread_mutex_lock(&philo->forks[right]);
+		}
+
+		pthread_mutex_lock(&philo->meal_mutex);
+		philo->last_meal_time = get_current_ms(philo->input);
+		philo->meals_eaten++;
+		pthread_mutex_unlock(&philo->meal_mutex);
+
 		pthread_mutex_lock(philo->print_mutex);
 		printf("time: %ld, id: %d is eating\n", get_current_ms(philo->input), philo->id);
 		pthread_mutex_unlock(philo->print_mutex);
-		philo->last_meal_time = get_current_ms(philo->input);
+
 		smart_sleep(philo->input->eat_time);
+
+		pthread_mutex_unlock(&philo->forks[left]);
+		pthread_mutex_unlock(&philo->forks[right]);
+
+		if (philo->input->meal_num != -1 && philo->meals_eaten >= philo->input->meal_num)
+			break;
 
 		pthread_mutex_lock(philo->print_mutex);
 		printf("time: %ld, id: %d is sleeping\n", get_current_ms(philo->input), philo->id);
@@ -149,26 +180,43 @@ void	*philo_loop(void *arg)
 void	*death_monitoring(void *arg)
 {
 	t_monitoring	*mon;
+	t_philo			*p;
 	int				i;
+	int				full_count;
 	long			time_since_meal;
 
 	mon = (t_monitoring *)arg;
 	while (1)
 	{
+		full_count = 0;
 		i = 0;
 		while (i < mon->input->philo_num)
 		{
-			time_since_meal = get_current_ms(mon->input) - mon->philos[i].last_meal_time;
-			if (time_since_meal >= mon->input->die_time)
+			p = &mon->philos[i];
+
+			pthread_mutex_lock(&p->meal_mutex);
+			time_since_meal = get_current_ms(mon->input) - p->last_meal_time;
+			if (mon->input->meal_num != -1 && p->meals_eaten >= mon->input->meal_num)
+				full_count++;
+			pthread_mutex_unlock(&p->meal_mutex);
+
+			if (time_since_meal >= mon->input->die_time + CHECK_DELAY)
 			{
 				pthread_mutex_lock(mon->print_mutex);
-				printf("time: %ld, id: %d is died\n", get_current_ms(mon->input), mon->philos[i].id);
+				printf("time: %ld, id: %d is died\n", get_current_ms(mon->input), p->id);
 				pthread_mutex_unlock(mon->print_mutex);
 				exit(0);
 			}
 			i++;
 		}
-		usleep(1000);
+		if (mon->input->meal_num != -1 && full_count == mon->input->philo_num)
+		{
+			pthread_mutex_lock(mon->print_mutex);
+			printf("All philosophers have eaten %d times. Exiting.\n", mon->input->meal_num);
+			pthread_mutex_unlock(mon->print_mutex);
+			exit(0);
+		}
+		usleep(500);
 	}
 	return (NULL);
 }
@@ -201,6 +249,7 @@ int	init_philos(t_input *input)
 		philos[i].print_mutex = print_mutex;
 		philos[i].last_meal_time = get_current_ms(input);
 		pthread_create(&threads[i], NULL, philo_loop, &philos[i]);
+		usleep(100);
 		i++;
 	}
 	mon->philos = philos;
@@ -227,3 +276,4 @@ int	main(int argc, char **argv)
 		return (1);
 	return (0);
 }
+//100 800 200 200

@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PHILO
-# define PHILO
+#ifndef PHILO_H
+# define PHILO_H
 
 # include "ft_printf.h"
 # include "libft.h"
@@ -40,6 +40,7 @@ typedef struct s_philo
 	t_input			*input;
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	*print_mutex;
+	pthread_mutex_t	meal_mutex;
 }	t_philo;
 
 typedef struct s_monitor
