@@ -19,13 +19,11 @@ CYAN		= \033[1;36m		# Bright cyan
 
 NAME = philo
 
-SUPULIB_DIR = SuPuLib
-SUPULIB_REPO = https://github.com/SuPuHe/SuPuLib.git
 SRCS_DIR = srcs
 OBJS_DIR = objs
 INCS_DIR = includes
 
-INCLUDE = -I$(INCS_DIR) -I$(SUPULIB_DIR)/libft/includes -I$(SUPULIB_DIR)/ft_printf/includes -I$(SUPULIB_DIR)/get_next_line/includes
+INCLUDE = -I$(INCS_DIR)
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -pthread $(INCLUDE)
 
@@ -37,18 +35,11 @@ SRCS := $(addprefix $(SRCS_DIR)/, $(SRCS))
 
 OBJS = $(SRCS:$(SRCS_DIR)/%.c=$(OBJS_DIR)/%.o)
 
-all: $(SUPULIB_DIR)/SuPuLib.a $(NAME)
+all: $(NAME)
 
-$(SUPULIB_DIR):
-	@git clone $(SUPULIB_REPO) $(SUPULIB_DIR)
-	@echo "$(GREEN)SuPuLib cloned successfully$(RESET_COLOR)"
-
-$(SUPULIB_DIR)/SuPuLib.a: | $(SUPULIB_DIR)
-	@$(MAKE) -C $(SUPULIB_DIR)
-
-# Compile push_swap
-$(NAME): $(SUPULIB_DIR)/SuPuLib.a $(OBJS) $(MAIN_PUSH_OBJS)
-	@$(CC) $(CFLAGS) $(OBJS) $(MAIN_PUSH_OBJS) $(SUPULIB_DIR)/SuPuLib.a -o $(NAME)
+# Compile philo
+$(NAME): $(OBJS)
+	@$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
 	@echo "$(GREEN)$(NAME) compiled successfully$(RESET_COLOR)"
 
 # Compile object files
@@ -60,12 +51,10 @@ $(OBJS_DIR):
 
 clean:
 	@$(RM) $(OBJS_DIR)
-	@$(MAKE) -C $(SUPULIB_DIR) clean
 	@echo "$(GREEN)Clean sucessfully$(RESET_COLOR)"
 
 fclean: clean
 	@$(RM) $(NAME)
-	@$(MAKE) -C $(SUPULIB_DIR) fclean
 	@echo "$(GREEN)Fclean sucessfully$(RESET_COLOR)"
 
 re: fclean all

@@ -13,13 +13,11 @@
 #ifndef PHILO_H
 # define PHILO_H
 
-# include "ft_printf.h"
-# include "libft.h"
-# include "get_next_line.h"
-
 # include <sys/time.h>
 # include <pthread.h>
 # include <stdio.h>
+# include <stdlib.h>
+# include <unistd.h>
 
 typedef struct s_input
 {
