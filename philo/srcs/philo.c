@@ -12,7 +12,7 @@
 
 #include "philo.h"
 
-#define CHECK_DELAY 2
+#define CHECK_DELAY 1
 
 long	get_time(void)
 {
@@ -100,41 +100,38 @@ int	get_input(int argc, char **argv, t_input *input)
 	return (1);
 }
 
-pthread_mutex_t	*init_forks(int n)
-{
-	pthread_mutex_t	*forks;
-	int				i;
-
-	forks = malloc(sizeof(pthread_mutex_t) * n);
-	if (!forks)
-		return (NULL);
-	i = 0;
-	while (i < n)
-	{
-		pthread_mutex_init(&forks[i], NULL);
-		i++;
-	}
-	return (forks);
-}
-
 void	smart_sleep(long ms)
 {
 	long	start;
 
 	start = get_time();
 	while (get_time() - start < ms)
-		usleep(10);
+		usleep(500);
 }
+
+// pthread_mutex_t	*init_forks(int n)
+// {
+// 	pthread_mutex_t	*forks;
+// 	int				i;
+
+// 	forks = malloc(sizeof(pthread_mutex_t) * n);
+// 	if (!forks)
+// 		return (NULL);
+// 	i = 0;
+// 	while (i < n)
+// 	{
+// 		pthread_mutex_init(&forks[i], NULL);
+// 		i++;
+// 	}
+// 	return (forks);
+// }
 
 void	*philo_loop(void *arg)
 {
-	t_philo	*philo;
-	int		left;
-	int		right;
+	t_philo	*philo = (t_philo *)arg;
 
-	philo = (t_philo *)arg;
-	left = philo->id - 1;
-	right = (philo->id) % philo->input->philo_num;
+	if (philo->id % 2 != 0)
+		usleep(500);
 	while (1)
 	{
 		pthread_mutex_lock(philo->print_mutex);
@@ -143,13 +140,13 @@ void	*philo_loop(void *arg)
 
 		if (philo->id % 2 == 0)
 		{
-			pthread_mutex_lock(&philo->forks[right]);
-			pthread_mutex_lock(&philo->forks[left]);
+			pthread_mutex_lock(philo->fork_right);
+			pthread_mutex_lock(&philo->fork_left);
 		}
 		else
 		{
-			pthread_mutex_lock(&philo->forks[left]);
-			pthread_mutex_lock(&philo->forks[right]);
+			pthread_mutex_lock(&philo->fork_left);
+			pthread_mutex_lock(philo->fork_right);
 		}
 
 		pthread_mutex_lock(&philo->meal_mutex);
@@ -163,8 +160,8 @@ void	*philo_loop(void *arg)
 
 		smart_sleep(philo->input->eat_time);
 
-		pthread_mutex_unlock(&philo->forks[left]);
-		pthread_mutex_unlock(&philo->forks[right]);
+		pthread_mutex_unlock(&philo->fork_left);
+		pthread_mutex_unlock(philo->fork_right);
 
 		if (philo->input->meal_num != -1 && philo->meals_eaten >= philo->input->meal_num)
 			break;
@@ -225,43 +222,59 @@ int	init_philos(t_input *input)
 {
 	pthread_t		*threads;
 	t_philo			*philos;
-	pthread_mutex_t	*forks;
-	pthread_mutex_t	*print_mutex;
 	pthread_t		monitoring_thread;
 	t_monitoring	*mon;
+	pthread_mutex_t	*print_mutex;
 	int				i;
 
 	threads = malloc(sizeof(pthread_t) * input->philo_num);
 	philos = malloc(sizeof(t_philo) * input->philo_num);
-	forks = init_forks(input->philo_num);
 	print_mutex = malloc(sizeof(pthread_mutex_t));
 	mon = malloc(sizeof(t_monitoring));
-	if (!threads || !philos || !forks || !print_mutex || !mon)
+	if (!threads || !philos || !print_mutex || !mon)
 		return (0);
+
 	pthread_mutex_init(print_mutex, NULL);
+
 	i = 0;
 	while (i < input->philo_num)
 	{
 		philos[i].id = i + 1;
 		philos[i].meals_eaten = 0;
 		philos[i].input = input;
-		philos[i].forks = forks;
 		philos[i].print_mutex = print_mutex;
+		pthread_mutex_init(&philos[i].fork_left, NULL);
+		pthread_mutex_init(&philos[i].meal_mutex, NULL);
 		philos[i].last_meal_time = get_current_ms(input);
+		i++;
+	}
+
+	i = 0;
+	while (i < input->philo_num)
+	{
+		if (i == 0)
+			philos[i].fork_right = &philos[input->philo_num - 1].fork_left;
+		else
+			philos[i].fork_right = &philos[i - 1].fork_left;
+		i++;
+	}
+
+	i = 0;
+	while (i < input->philo_num)
+	{
 		pthread_create(&threads[i], NULL, philo_loop, &philos[i]);
 		usleep(100);
 		i++;
 	}
+
 	mon->philos = philos;
 	mon->input = input;
 	mon->print_mutex = print_mutex;
 	pthread_create(&monitoring_thread, NULL, death_monitoring, mon);
+
 	i = 0;
 	while (i < input->philo_num)
-	{
-		pthread_join(threads[i], NULL);
-		i++;
-	}
+		pthread_join(threads[i++], NULL);
 	return (1);
 }
 

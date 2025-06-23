@@ -39,6 +39,8 @@ typedef struct s_philo
 	pthread_mutex_t	*forks;
 	pthread_mutex_t	*print_mutex;
 	pthread_mutex_t	meal_mutex;
+	pthread_mutex_t	fork_left;
+	pthread_mutex_t	*fork_right;
 }	t_philo;
 
 typedef struct s_monitor
