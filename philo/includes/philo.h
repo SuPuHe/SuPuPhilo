@@ -28,6 +28,8 @@ typedef struct s_input
 	int		sleep_time;
 	int		meal_num;
 	long	start_time;
+	int				death_flag;
+	pthread_mutex_t	death_mutex;
 }	t_input;
 
 typedef struct s_philo
