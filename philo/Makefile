@@ -24,8 +24,9 @@ OBJS_DIR = objs
 INCS_DIR = includes
 
 INCLUDE = -I$(INCS_DIR)
-CC = cc
+CC = gcc
 CFLAGS = -Wall -Wextra -Werror -pthread $(INCLUDE)
+LDFLAGS = -fsanitize=thread -g
 
 RM = rm -rf
 

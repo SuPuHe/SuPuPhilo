@@ -103,7 +103,7 @@ int	get_input(int argc, char **argv, t_input *input)
 	while (i < argc)
 	{
 		if (ft_num_check(argv[i]) == 0)
-			return (printf("Error input\n"), 1);
+			return (printf("Error input\n"), 0);
 		i++;
 	}
 	set_input_info(input, argc, argv);
@@ -123,10 +123,10 @@ void	print_status(t_philo *philo, const char *msg)
 {
 	if (is_dead(philo))
 		return;
-	pthread_mutex_lock(philo->print_mutex);
+	//pthread_mutex_lock(philo->print_mutex);
 	if (!is_dead(philo))
 		printf("time: %ld, id: %d %s\n", get_current_ms(philo->input), philo->id, msg);
-	pthread_mutex_unlock(philo->print_mutex);
+	//pthread_mutex_unlock(philo->print_mutex);
 }
 
 void	*philo_loop(void *arg)
@@ -140,12 +140,16 @@ void	*philo_loop(void *arg)
 		print_status(philo, "is thinking");
 		if (philo->id % 2 == 0)
 		{
+			print_status(philo, "has taken a fork");
 			pthread_mutex_lock(philo->fork_right);
+			print_status(philo, "has taken a fork");
 			pthread_mutex_lock(&philo->fork_left);
 		}
 		else
 		{
+			print_status(philo, "has taken a fork");
 			pthread_mutex_lock(&philo->fork_left);
+			print_status(philo, "has taken a fork");
 			pthread_mutex_lock(philo->fork_right);
 		}
 
@@ -310,19 +314,6 @@ int	main(int argc, char **argv)
 		return (1);
 	return (0);
 }
+
 //100 800 200 200
 
-// ==88== HEAP SUMMARY:
-// ==88==     in use at exit: 1,632 bytes in 3 blocks
-// ==88==   total heap usage: 14 allocs, 11 frees, 5,376 bytes allocated
-// ==88==
-// ==88== LEAK SUMMARY:
-// ==88==    definitely lost: 1,360 bytes in 2 blocks
-// ==88==    indirectly lost: 0 bytes in 0 blocks
-// ==88==      possibly lost: 272 bytes in 1 blocks
-// ==88==    still reachable: 0 bytes in 0 blocks
-// ==88==         suppressed: 0 bytes in 0 blocks
-// ==88== Rerun with --leak-check=full to see details of leaked memory
-// ==88==
-// ==88== For lists of detected and suppressed errors, rerun with: -s
-// ==88== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
