@@ -119,23 +119,6 @@ void	smart_sleep(long ms, t_philo *philo)
 		usleep(500);
 }
 
-// pthread_mutex_t	*init_forks(int n)
-// {
-// 	pthread_mutex_t	*forks;
-// 	int				i;
-
-// 	forks = malloc(sizeof(pthread_mutex_t) * n);
-// 	if (!forks)
-// 		return (NULL);
-// 	i = 0;
-// 	while (i < n)
-// 	{
-// 		pthread_mutex_init(&forks[i], NULL);
-// 		i++;
-// 	}
-// 	return (forks);
-// }
-
 void	print_status(t_philo *philo, const char *msg)
 {
 	if (is_dead(philo))
@@ -171,9 +154,6 @@ void	*philo_loop(void *arg)
 		philo->meals_eaten++;
 		pthread_mutex_unlock(&philo->meal_mutex);
 
-		if (is_dead(philo))
-			break;
-
 		print_status(philo, "is eating");
 
 		smart_sleep(philo->input->eat_time, philo);
@@ -184,11 +164,8 @@ void	*philo_loop(void *arg)
 		if (philo->input->meal_num != -1 && philo->meals_eaten >= philo->input->meal_num)
 			break;
 
-		if (is_dead(philo))
-			break;
-
 		print_status(philo, "is sleeping");
-		
+
 		smart_sleep(philo->input->sleep_time, philo);
 	}
 	return (NULL);
@@ -220,7 +197,7 @@ void	*death_monitoring(void *arg)
 			if (time_since_meal >= mon->input->die_time + CHECK_DELAY)
 			{
 				pthread_mutex_lock(mon->print_mutex);
-				printf("time: %ld, id: %d is died\n", get_current_ms(mon->input), p->id);
+				printf("time: %ld, id: %d died\n", get_current_ms(mon->input), p->id);
 				pthread_mutex_unlock(mon->print_mutex);
 
 				pthread_mutex_lock(&mon->input->death_mutex);
@@ -242,7 +219,7 @@ void	*death_monitoring(void *arg)
 			pthread_mutex_unlock(&mon->input->death_mutex);
 			return (NULL);
 		}
-		usleep(500);
+		usleep(100);
 	}
 	return (NULL);
 }
@@ -251,19 +228,19 @@ int	init_philos(t_input *input)
 {
 	pthread_t		*threads;
 	t_philo			*philos;
+	t_monitoring	mon;
+	pthread_mutex_t	print_mutex;
 	pthread_t		monitoring_thread;
-	t_monitoring	*mon;
-	pthread_mutex_t	*print_mutex;
 	int				i;
 
 	threads = malloc(sizeof(pthread_t) * input->philo_num);
 	philos = malloc(sizeof(t_philo) * input->philo_num);
-	print_mutex = malloc(sizeof(pthread_mutex_t));
-	mon = malloc(sizeof(t_monitoring));
-	if (!threads || !philos || !print_mutex || !mon)
+	if (!threads || !philos)
 		return (0);
 
-	pthread_mutex_init(print_mutex, NULL);
+	pthread_mutex_init(&print_mutex, NULL);
+	pthread_mutex_init(&input->death_mutex, NULL);
+	input->death_flag = 0;
 
 	i = 0;
 	while (i < input->philo_num)
@@ -271,13 +248,12 @@ int	init_philos(t_input *input)
 		philos[i].id = i + 1;
 		philos[i].meals_eaten = 0;
 		philos[i].input = input;
-		philos[i].print_mutex = print_mutex;
+		philos[i].print_mutex = &print_mutex;
 		pthread_mutex_init(&philos[i].fork_left, NULL);
 		pthread_mutex_init(&philos[i].meal_mutex, NULL);
 		philos[i].last_meal_time = get_current_ms(input);
 		i++;
 	}
-
 	i = 0;
 	while (i < input->philo_num)
 	{
@@ -288,9 +264,6 @@ int	init_philos(t_input *input)
 		i++;
 	}
 
-	pthread_mutex_init(&input->death_mutex, NULL);
-	input->death_flag = 0;
-
 	i = 0;
 	while (i < input->philo_num)
 	{
@@ -299,16 +272,32 @@ int	init_philos(t_input *input)
 		i++;
 	}
 
-	mon->philos = philos;
-	mon->input = input;
-	mon->print_mutex = print_mutex;
-	pthread_create(&monitoring_thread, NULL, death_monitoring, mon);
+	mon.philos = philos;
+	mon.input = input;
+	mon.print_mutex = &print_mutex;
+	pthread_create(&monitoring_thread, NULL, death_monitoring, &mon);
 
 	i = 0;
 	while (i < input->philo_num)
 		pthread_join(threads[i++], NULL);
+
+	pthread_join(monitoring_thread, NULL);
+
+	i = 0;
+	while (i < input->philo_num)
+	{
+		pthread_mutex_destroy(&philos[i].fork_left);
+		pthread_mutex_destroy(&philos[i].meal_mutex);
+		i++;
+	}
+	pthread_mutex_destroy(&print_mutex);
+	pthread_mutex_destroy(&input->death_mutex);
+
+	free(threads);
+	free(philos);
 	return (1);
 }
+
 
 int	main(int argc, char **argv)
 {
@@ -322,3 +311,18 @@ int	main(int argc, char **argv)
 	return (0);
 }
 //100 800 200 200
+
+// ==88== HEAP SUMMARY:
+// ==88==     in use at exit: 1,632 bytes in 3 blocks
+// ==88==   total heap usage: 14 allocs, 11 frees, 5,376 bytes allocated
+// ==88==
+// ==88== LEAK SUMMARY:
+// ==88==    definitely lost: 1,360 bytes in 2 blocks
+// ==88==    indirectly lost: 0 bytes in 0 blocks
+// ==88==      possibly lost: 272 bytes in 1 blocks
+// ==88==    still reachable: 0 bytes in 0 blocks
+// ==88==         suppressed: 0 bytes in 0 blocks
+// ==88== Rerun with --leak-check=full to see details of leaked memory
+// ==88==
+// ==88== For lists of detected and suppressed errors, rerun with: -s
+// ==88== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
