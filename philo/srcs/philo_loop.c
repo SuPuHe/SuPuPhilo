@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/25 11:21:43 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/25 12:23:59 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/25 12:45:11 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,8 +58,8 @@ static int	philo_eating(t_philo *philo)
 		print_status(philo, "has taken a fork");
 		pthread_mutex_lock(philo->fork_right);
 	}
-	update_meals(philo);
 	print_status(philo, "is eating");
+	update_meals(philo);
 	smart_sleep(philo->input->eat_time, philo);
 	pthread_mutex_unlock(&philo->fork_left);
 	pthread_mutex_unlock(philo->fork_right);

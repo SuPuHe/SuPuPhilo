@@ -29,7 +29,6 @@ typedef struct s_input
 	int				meal_num;
 	long			start_time;
 	int				death_flag;
-	int				delay;
 	pthread_mutex_t	death_mutex;
 }	t_input;
 
