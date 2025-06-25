@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/25 11:36:27 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/25 13:35:47 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/25 14:10:54 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,10 @@ static int	set_input_info(t_input *input, int argc, char **argv)
 	input->philo_num = ft_long_atoi(argv[1]);
 	if (input->philo_num == 0)
 		return (0);
+	if (input->philo_num < 10 && (input->philo_num % 2 == 0))
+		input->delay = 0;
+	else
+		input->delay = 1;
 	input->fork_num = ft_long_atoi(argv[1]);
 	input->die_time = ft_long_atoi(argv[2]);
 	input->eat_time = ft_long_atoi(argv[3]);

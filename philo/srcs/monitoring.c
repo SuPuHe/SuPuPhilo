@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/25 11:30:17 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/25 13:54:27 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/25 14:08:35 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ pthread_mutex_t *print_mutex)
 	pthread_mutex_lock(&p->meal_mutex);
 	time_since_meal = get_current_ms(input) - p->last_meal_time;
 	pthread_mutex_unlock(&p->meal_mutex);
-	if (time_since_meal >= input->die_time)
+	if (time_since_meal >= input->die_time + input->delay)
 	{
 		pthread_mutex_lock(print_mutex);
 		printf("time: %ld, id: %d died\n", get_current_ms(input), p->id);
