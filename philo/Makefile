@@ -30,7 +30,7 @@ LDFLAGS = -fsanitize=thread -g
 
 RM = rm -rf
 
-SRCS = philo.c
+SRCS = philo.c philo_loop.c helpers.c monitoring.c time.c set_input.c init_info.c
 
 SRCS := $(addprefix $(SRCS_DIR)/, $(SRCS))
 
