@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/18 11:26:00 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/18 11:26:00 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/26 12:12:59 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,7 +72,7 @@ long	get_current_ms(t_input *input)
 	return (get_time() - input->start_time);
 }
 
-void	smart_sleep(long ms, t_philo *philo)
+void	smart_sleep(long ms)
 {
 	long	start;
 
@@ -126,10 +126,12 @@ void	handle_one_philo(t_philo *philo)
 	print_status(philo, "is thinking");
 	sem_wait(philo->input->sem_forks);
 	print_status(philo, "has taken a fork");
-	smart_sleep(philo->input->die_time, philo);
-	sem_post(philo->input->sem_forks);
-	exit(0);
+	smart_sleep(philo->input->die_time);
+	print_status(philo, "died");
+	sem_post(philo->input->sem_stop);
+	exit(1);
 }
+
 
 int	philo_thinking_sleeping(t_philo *philo, int helper)
 {
@@ -138,7 +140,7 @@ int	philo_thinking_sleeping(t_philo *philo, int helper)
 	else if (helper == 1)
 	{
 		print_status(philo, "is sleeping");
-		smart_sleep(philo->input->sleep_time, philo);
+		smart_sleep(philo->input->sleep_time);
 	}
 	return (1);
 }
@@ -159,7 +161,7 @@ int	philo_eating(t_philo *philo)
 	print_status(philo, "has taken a fork");
 	print_status(philo, "is eating");
 	update_meals(philo);
-	smart_sleep(philo->input->eat_time, philo);
+	smart_sleep(philo->input->eat_time);
 	sem_post(philo->input->sem_forks);
 	sem_post(philo->input->sem_forks);
 	if (philo->input->meal_num != -1
@@ -170,8 +172,12 @@ int	philo_eating(t_philo *philo)
 
 void	philo_loop(t_philo *philo)
 {
+	pthread_t	death_thread;
+
 	if (philo->id % 2 == 0)
 		usleep(500);
+	pthread_create(&death_thread, NULL, death_monitoring, philo);
+	pthread_detach(death_thread);
 	if (philo->input->philo_num == 1)
 		handle_one_philo(philo);
 	while (1)
@@ -242,27 +248,24 @@ void	*check_all_full(void *arg)
 
 void	*death_monitoring(void *arg)
 {
-	t_monitoring	*mon;
-	t_input			*input;
-	t_philo			*philos;
-	int				i;
+	t_philo	*philo;
+	long	time_since_meal;
 
-	mon = (t_monitoring *)arg;
-	input = mon->input;
-	philos = mon->philos;
+	philo = (t_philo *)arg;
 	while (1)
 	{
-		i = 0;
-		while (i < input->philo_num)
+		usleep(1000);
+		sem_wait(philo->input->sem_meal_check);
+		time_since_meal = get_current_ms(philo->input) - philo->last_meal_time;
+		sem_post(philo->input->sem_meal_check);
+
+		if (time_since_meal >= philo->input->die_time)
 		{
-			if (check_if_died(&philos[i], input, mon->print_mutex))
-				return (NULL);
-			i++;
+			sem_wait(philo->input->sem_print);
+			printf("time: %ld, id: %d died\n", get_current_ms(philo->input), philo->id);
+			sem_post(philo->input->sem_stop);
+			exit(1);
 		}
-		if (input->meal_num != -1
-			&& check_all_full(philos, input, mon->print_mutex))
-			return (NULL);
-		usleep(100);
 	}
 	return (NULL);
 }
@@ -329,9 +332,10 @@ void	destroy_all_semaphores(t_input *input)
 	sem_unlink("/sem_stop");
 }
 
-int	init_info(t_input *input)
+int	init_info(t_input *input, t_philo **philos_out)
 {
-	t_philo	*philos;
+	t_philo		*philos;
+	pthread_t	meals_thread;
 
 	philos = malloc(sizeof(t_philo) * input->philo_num);
 	if (!philos)
@@ -339,11 +343,15 @@ int	init_info(t_input *input)
 	init_philos(philos, input);
 	if (!create_processes(input, philos))
 		return (0);
-	wait_for_processes(input, philos);
-	destroy_all_semaphores(input);
-	free(philos);
+	if (input->meal_num != -1)
+	{
+		pthread_create(&meals_thread, NULL, check_all_full, philos);
+		pthread_detach(meals_thread);
+	}
+	*philos_out = philos;
 	return (1);
 }
+
 
 int	init_semaphores(t_input *input)
 {
@@ -354,7 +362,7 @@ int	init_semaphores(t_input *input)
 	input->sem_forks = sem_open("/sem_forks", O_CREAT, 0644, input->philo_num);
 	input->sem_print = sem_open("/sem_print", O_CREAT, 0644, 1);
 	input->sem_meal_check = sem_open("/sem_meal_check", O_CREAT, 0644, 1);
-	input->sem_stop = sem_open("/sem_stop", O_CREAT, 0644, 1);
+	input->sem_stop = sem_open("/sem_stop", O_CREAT, 0644, 0);
 	if (input->sem_forks == SEM_FAILED || input->sem_print == SEM_FAILED
 		|| input->sem_meal_check == SEM_FAILED || input->sem_stop == SEM_FAILED)
 	{
@@ -367,12 +375,24 @@ int	init_semaphores(t_input *input)
 int	main(int argc, char **argv)
 {
 	t_input	input;
+	t_philo	*philos;
+	int		i;
 
 	if (!get_input(argc, argv, &input))
 		return (1);
+	printf("meals %d\n", input.meal_num);
 	if (!init_semaphores(&input))
 		return (1);
-	if (!init_info(&input))
+	if (!init_info(&input, &philos))
 		return (1);
+	sem_wait(input.sem_stop);
+	i = 0;
+	while (i < input.philo_num)
+	{
+		kill(philos[i].pid, SIGKILL);
+		i++;
+	}
+	destroy_all_semaphores(&input);
+	free(philos);
 	return (0);
 }

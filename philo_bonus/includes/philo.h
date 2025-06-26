@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/16 09:58:25 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/17 12:13:19 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/26 12:07:30 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 # include <stdlib.h>
 # include <unistd.h>
 # include <semaphore.h>
+# include <signal.h>
 
 typedef struct s_input
 {
@@ -52,13 +53,13 @@ typedef struct s_monitor
 }	t_monitoring;
 
 //logic
-void	*philo_loop(void *arg);
+void	philo_loop(t_philo *philo);
 //monitoring
 void	*death_monitoring(void *arg);
 //input
 int		get_input(int argc, char **argv, t_input *input);
 //init information
-int		init_info(t_input *input);
+int		init_info(t_input *input, t_philo **philos_out);
 //heplers
 void	print_status(t_philo *philo, const char *msg);
 int		is_dead(t_philo *philo);
@@ -68,6 +69,6 @@ int		allocate_memory(t_input *input, pthread_t **threads, t_philo **philos);
 //time
 long	get_time(void);
 long	get_current_ms(t_input *input);
-void	smart_sleep(long ms, t_philo *philo);
+void	smart_sleep(long ms);
 
 #endif
