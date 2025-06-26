@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/16 09:58:25 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/26 12:07:30 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/26 20:19:27 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,9 @@
 # include <unistd.h>
 # include <semaphore.h>
 # include <signal.h>
+# include <sys/wait.h>
+# include <fcntl.h>
+# include <sys/mman.h>
 
 typedef struct s_input
 {
@@ -30,10 +33,14 @@ typedef struct s_input
 	int		meal_num;
 	long	start_time;
 	int		stop_flag;
+	pid_t	checker_pid;
+	pid_t	killer_pid;
 	sem_t	*sem_forks;
 	sem_t	*sem_print;
 	sem_t	*sem_meal_check;
 	sem_t	*sem_stop;
+	sem_t	*sem_meal_done;
+	sem_t	*sem_kill_detect;
 }	t_input;
 
 typedef struct s_philo
