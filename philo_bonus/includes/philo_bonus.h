@@ -1,17 +1,17 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo.h                                            :+:      :+:    :+:   */
+/*   philo_bonus.h                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/16 09:58:25 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/26 20:19:27 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/27 17:27:30 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PHILO_H
-# define PHILO_H
+#ifndef PHILO_BONUS_H
+# define PHILO_BONUS_H
 
 # include <sys/time.h>
 # include <pthread.h>
@@ -41,6 +41,7 @@ typedef struct s_input
 	sem_t	*sem_stop;
 	sem_t	*sem_meal_done;
 	sem_t	*sem_kill_detect;
+	sem_t	*sem_dead;
 }	t_input;
 
 typedef struct s_philo
@@ -59,23 +60,27 @@ typedef struct s_monitor
 	pthread_mutex_t	*print_mutex;
 }	t_monitoring;
 
-//logic
-void	philo_loop(t_philo *philo);
-//monitoring
-void	*death_monitoring(void *arg);
 //input
 int		get_input(int argc, char **argv, t_input *input);
-//init information
-int		init_info(t_input *input, t_philo **philos_out);
-//heplers
-void	print_status(t_philo *philo, const char *msg);
-int		is_dead(t_philo *philo);
-long	ft_long_atoi(const char *string);
-int		ft_num_check(char *s);
-int		allocate_memory(t_input *input, pthread_t **threads, t_philo **philos);
 //time
 long	get_time(void);
 long	get_current_ms(t_input *input);
 void	smart_sleep(long ms);
+//monitoring
+void	*death_monitoring(void *arg);
+//utils
+int		ft_num_check(char *s);
+long	ft_long_atoi(const char *string);
+void	print_status(t_philo *philo, const char *msg);
+//philo_loop
+void	philo_loop(t_philo *philo);
+//kill_process
+void	destroy_all_semaphores(t_input *input);
+void	wait_for_meals(t_input *input);
+void	kill_process(t_philo *philos, t_input *input);
+//init_info
+int		init_semaphores(t_input *input);
+int		init_info(t_input *input, t_philo **philos_out);
+void	*death_monitoring(void *arg);
 
 #endif

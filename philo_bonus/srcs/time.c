@@ -1,31 +1,35 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   philo.c                                            :+:      :+:    :+:   */
+/*   time.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/06/18 11:26:00 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/27 18:49:41 by omizin           ###   ########.fr       */
+/*   Created: 2025/06/27 16:38:30 by omizin            #+#    #+#             */
+/*   Updated: 2025/06/27 16:38:38 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo_bonus.h"
 
-int	main(int argc, char **argv)
+long	get_time(void)
 {
-	t_input	input;
-	t_philo	*philos;
+	struct timeval	tv;
 
-	if (!get_input(argc, argv, &input))
-		return (1);
-	if (!init_semaphores(&input))
-		return (1);
-	if (!init_info(&input, &philos))
-		return (1);
-	sem_wait(input.sem_stop);
-	kill_process(philos, &input);
-	destroy_all_semaphores(&input);
-	free(philos);
-	return (0);
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000 + tv.tv_usec / 1000);
+}
+
+long	get_current_ms(t_input *input)
+{
+	return (get_time() - input->start_time);
+}
+
+void	smart_sleep(long ms)
+{
+	long	start;
+
+	start = get_time();
+	while (get_time() - start < ms)
+		usleep(500);
 }

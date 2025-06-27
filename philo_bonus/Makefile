@@ -6,7 +6,7 @@
 #    By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/06/16 09:55:52 by omizin            #+#    #+#              #
-#    Updated: 2025/06/17 14:41:03 by omizin           ###   ########.fr        #
+#    Updated: 2025/06/27 17:27:39 by omizin           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,7 +30,7 @@ LDFLAGS = -fsanitize=thread -g
 
 RM = rm -rf
 
-SRCS = philo.c 
+SRCS = philo.c set_input.c time.c utils.c philo_loop.c kill_processes.c init_info.c
 
 SRCS := $(addprefix $(SRCS_DIR)/, $(SRCS))
 
