@@ -6,7 +6,7 @@
 #    By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/06/16 09:55:52 by omizin            #+#    #+#              #
-#    Updated: 2025/06/27 17:27:39 by omizin           ###   ########.fr        #
+#    Updated: 2025/06/27 20:16:28 by omizin           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,6 @@ INCS_DIR = includes
 INCLUDE = -I$(INCS_DIR)
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -pthread $(INCLUDE)
-LDFLAGS = -fsanitize=thread -g
 
 RM = rm -rf
 

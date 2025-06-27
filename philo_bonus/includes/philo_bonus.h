@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/16 09:58:25 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/27 17:27:30 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/27 20:16:37 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,6 @@ typedef struct s_input
 	int		sleep_time;
 	int		meal_num;
 	long	start_time;
-	int		stop_flag;
 	pid_t	checker_pid;
 	pid_t	killer_pid;
 	sem_t	*sem_forks;
@@ -52,13 +51,6 @@ typedef struct s_philo
 	pid_t	pid;
 	t_input	*input;
 }	t_philo;
-
-typedef struct s_monitor
-{
-	t_philo			*philos;
-	t_input			*input;
-	pthread_mutex_t	*print_mutex;
-}	t_monitoring;
 
 //input
 int		get_input(int argc, char **argv, t_input *input);
