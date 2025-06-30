@@ -6,7 +6,7 @@
 /*   By: omizin <omizin@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/06/27 17:24:40 by omizin            #+#    #+#             */
-/*   Updated: 2025/06/27 17:29:32 by omizin           ###   ########.fr       */
+/*   Updated: 2025/06/30 13:34:11 by omizin           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,8 @@ void	*death_monitoring(void *arg)
 		{
 			print_status(philo, "died");
 			sem_post(philo->input->sem_stop);
-			sem_post(philo->input->sem_kill_detect);
+			if (philo->input->meal_num != -1)
+				sem_post(philo->input->sem_kill_detect);
 			exit(1);
 		}
 	}
